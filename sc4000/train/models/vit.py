@@ -85,7 +85,7 @@ class ViT(Model):
         evaluation_strategy: str = "epoch",
         lr: float = 2e-5,
         weight_decay: float = 0.01,
-        num_train_epochs: int = 80,
+        num_train_epochs: int = 40,
         per_device_train_batch_size: int = 10,
         per_device_eval_batch_size: int = 4,
         load_best_model_at_end: bool = True,
