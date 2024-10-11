@@ -22,6 +22,12 @@ def setup_args():
         default="pufanyi/cassava-leaf-disease-classification",
     )
     parser.add_argument(
+        "--subset",
+        type=str,
+        help="Subset of the dataset to use",
+        default="default",
+    )
+    parser.add_argument(
         "--model_args", type=str, help="Arguments for the model", default="{}"
     )
     parser.add_argument(
@@ -48,6 +54,7 @@ def setup_args():
         help="Name of the Weights and Biases run",
         default="default",
     )
+    parser.add_argument("--seed", type=int, help="Seed for reproducibility", default=42)
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     return parser.parse_args()
 
@@ -59,9 +66,12 @@ def setup_wandb(args):
     )
 
 
-def get_dataset(dataset_name: str) -> Tuple[Dataset, Dataset]:
-    data = load_dataset(dataset_name)
+def get_dataset(
+    dataset_name: str, subset: str, seed: int = 42
+) -> Tuple[Dataset, Dataset]:
+    data = load_dataset(dataset_name, subset)
     train_ds, val_ds = data["train"], data["validation"]
+    train_ds = train_ds.shuffle(seed=seed)
     return train_ds, val_ds
 
 
@@ -75,7 +85,7 @@ if __name__ == "__main__":
     setup_wandb(args)
 
     logger.info(f"Training model {args.model} on dataset {args.dataset}")
-    train_ds, val_ds = get_dataset(args.dataset)
+    train_ds, val_ds = get_dataset(args.dataset, args.subset, args.seed)
     id2label, label2id = label_mapping(train_ds)
 
     model_args = eval(args.model_args)
