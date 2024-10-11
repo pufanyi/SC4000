@@ -11,5 +11,5 @@ pip install -e .
 ## Train
 
 ```sh
-python -m sc4000.train.trainer --model=vit
+python -m sc4000.train.trainer --model=vit --wandb
 ```

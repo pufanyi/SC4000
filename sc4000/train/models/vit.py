@@ -21,6 +21,11 @@ from torchvision.transforms import (
     Resize,
 )
 
+from sc4000.train.utils.logger import setup_logger
+
+
+logger = setup_logger(__name__)
+
 
 class ViT(Model):
     def __init__(
@@ -59,10 +64,12 @@ class ViT(Model):
         )
 
     def process_image_train(self, images: List[Image.Image]):
-        return [self.train_transforms(image.convert("RGB")) for image in images]
+        return [
+            self.train_transforms(image.convert("RGB")) for image in images["image"]
+        ]
 
     def process_image_val(self, images: List[Image.Image]):
-        return [self.val_transforms(image.convert("RGB")) for image in images]
+        return [self.val_transforms(image.convert("RGB")) for image in images["image"]]
 
     def train(
         self,
@@ -80,7 +87,7 @@ class ViT(Model):
         load_best_model_at_end: bool = True,
         logging_dir: str = "logs",
         remove_unused_columns: bool = False,
-        **kwargs
+        **kwargs,
     ):
         train_ds.set_transform(self.process_image_train)
         val_ds.set_transform(self.process_image_val)
@@ -98,7 +105,7 @@ class ViT(Model):
             load_best_model_at_end=load_best_model_at_end,
             logging_dir=logging_dir,
             remove_unused_columns=remove_unused_columns,
-            **kwargs
+            **kwargs,
         )
 
         def collate_fn(examples):
