@@ -63,13 +63,17 @@ class ViT(Model):
             ]
         )
 
-    def process_image_train(self, images: List[Image.Image]):
-        return [
-            self.train_transforms(image.convert("RGB")) for image in images["image"]
+    def apply_train_transforms(self, examples):
+        examples["pixel_values"] = [
+            self.train_transforms(image.convert("RGB")) for image in examples["image"]
         ]
+        return examples
 
-    def process_image_val(self, images: List[Image.Image]):
-        return [self.val_transforms(image.convert("RGB")) for image in images["image"]]
+    def apply_val_transforms(self, examples):
+        examples["pixel_values"] = [
+            self.val_transforms(image.convert("RGB")) for image in examples["image"]
+        ]
+        return examples
 
     def train(
         self,
@@ -89,8 +93,8 @@ class ViT(Model):
         remove_unused_columns: bool = False,
         **kwargs,
     ):
-        train_ds.set_transform(self.process_image_train)
-        val_ds.set_transform(self.process_image_val)
+        train_ds.set_transform(self.apply_train_transforms)
+        val_ds.set_transform(self.apply_val_transforms)
 
         train_args = TrainingArguments(
             output_dir=output_dir,
