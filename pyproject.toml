@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sc4000"
+version = "0.0.1"
+description = "SC4000"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+]
+dependencies = [
+    "datasets>=3.0.0",
+    "pillow>=10.4.0",
+    "transformers==4.45.1",
+    "torch==2.4.1",
+    "torchvision==0.19.1",
+    "accelerate>=0.26.0"
+]
+
+[project.urls]
+"Homepage" = "https://pufanyi.github.io/SC4000/"
+"Bug Tracker" = "https://github.com/pufanyi/SC4000"

@@ -1,5 +1,5 @@
-from .model import Model
-from ..utils.label_utils import label_mapping
+from sc4000.train.models import Model
+from sc4000.train.utils.label_utils import label_mapping
 
 import torch
 from PIL import Image
@@ -24,7 +24,7 @@ from torchvision.transforms import (
 
 class ViT(Model):
     def __init__(
-        self, pretrained="google/vit-large-patch16-224", id2label=None, label2id=None
+        self, *, pretrained="google/vit-large-patch16-224", id2label=None, label2id=None
     ):
         super().__init__("ViT")
         self.image_processor = ViTImageProcessor.from_pretrained(pretrained)

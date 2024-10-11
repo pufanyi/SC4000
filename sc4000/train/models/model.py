@@ -11,7 +11,3 @@ class Model(ABC):
     @abstractmethod
     def train(self, train_ds: datasets.Dataset, val_ds: datasets.Dataset, epochs: int):
         raise NotImplementedError
-
-    @abstractmethod
-    def inference(self, input: Image.Image):
-        raise NotImplementedError
