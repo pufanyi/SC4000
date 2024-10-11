@@ -9,7 +9,7 @@ class Model(ABC):
         self.name = name
 
     @abstractmethod
-    def train(self, inputs: datasets.Dataset):
+    def train(self, train_ds: datasets.Dataset, val_ds: datasets.Dataset, epochs: int):
         raise NotImplementedError
 
     @abstractmethod
