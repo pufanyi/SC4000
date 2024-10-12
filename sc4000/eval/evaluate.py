@@ -105,7 +105,7 @@ if __name__ == "__main__":
     time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_folder = os.path.join(
         args.output_folder,
-        f"{args.model}-{args.dataset}_{args.subset}_{args.split}_{time}",
+        f"{args.model}-{args.dataset.split('/')[-1]}_{args.subset}_{args.split}_{time}",
     )
     os.makedirs(output_folder, exist_ok=True)
 
