@@ -20,5 +20,11 @@ python -m sc4000.train.trainer --model=vit --subset=full
 ## Evaluate
 
 ```sh
+python -m sc4000.eval.evaluate --model=vit --subset=full
+```
+
+For the `--model_args` options, should input like this:
+
+```sh
 python -m sc4000.eval.evaluate --model=vit --model_args="pretrained=output/models/checkpoint-124" --subset=full
 ```
