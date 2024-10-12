@@ -1,5 +1,5 @@
-from sc4000.train.models.base import Model
-from sc4000.train.models.vit import ViT
+from sc4000.eval.models.base import Model
+from sc4000.eval.models.vit import ViT
 
 models = {"vit": ViT}
 

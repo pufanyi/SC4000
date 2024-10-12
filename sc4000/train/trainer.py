@@ -1,13 +1,14 @@
 from datasets import load_dataset, Dataset
 from typing import Tuple
+from datetime import datetime
 
 import argparse
 import wandb
 import os
 
 from sc4000.train.models import load_model, Model
-from sc4000.train.utils.label_utils import label_mapping
-from sc4000.train.utils.logger import enable_debug_mode, setup_logger
+from sc4000.utils.label_utils import label_mapping
+from sc4000.utils.logger import enable_debug_mode, setup_logger
 
 
 logger = setup_logger(__name__)
@@ -97,7 +98,10 @@ if __name__ == "__main__":
 
     logger.info(f"Loaded model {model.name}")
 
-    output_folder = os.path.join(args.output_dir, model.name)
+    now_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    output_folder = os.path.join(args.output_dir, f"{model.name}_{now_time}")
 
     training_args = eval(args.training_args)
     model.train(train_ds, val_ds, output_dir=output_folder, **training_args)
+
+    logger.info(f"Training complete, model saved to {output_folder}")

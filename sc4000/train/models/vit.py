@@ -1,5 +1,5 @@
-from sc4000.train.models import Model
-from sc4000.train.utils.label_utils import label_mapping
+from sc4000.train.models.base import Model
+from sc4000.utils.label_utils import label_mapping
 
 import torch
 from PIL import Image
@@ -21,7 +21,7 @@ from torchvision.transforms import (
     Resize,
 )
 
-from sc4000.train.utils.logger import setup_logger
+from sc4000.utils.logger import setup_logger
 
 
 logger = setup_logger(__name__)
