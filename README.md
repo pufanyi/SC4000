@@ -17,7 +17,7 @@ python -m pip install -e .
 python -m sc4000.train.trainer --model=vit --subset=full
 ```
 
-## Evaluate
+## Evaluation
 
 ```sh
 python -m sc4000.eval.evaluate --model=vit --subset=full
