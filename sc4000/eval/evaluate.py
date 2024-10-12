@@ -32,6 +32,12 @@ def setup_args():
         default="default",
     )
     parser.add_argument(
+        "--split",
+        type=str,
+        help="Split of the dataset to use",
+        default="validation",
+    )
+    parser.add_argument(
         "--model_args", type=str, help="Arguments for the model", default="{}"
     )
     parser.add_argument(
@@ -44,7 +50,8 @@ def setup_args():
     return parser.parse_args()
 
 
-def evaluate(model: Model, val_ds: Dataset):
+def evaluate(model: Model, val_ds: Dataset, label2id, id2label, model_args):
+    model = load_model(args.model, label2id=label2id, id2label=id2label, **model_args)
     result = []
     correct_num = 0
     for example in tqdm(val_ds, desc=f"Evaluating {model.name}"):
@@ -71,7 +78,12 @@ def evaluate(model: Model, val_ds: Dataset):
 
     logger.info(f"Accuracy for {model.name}: {acc}")
 
-    return {"model": model.name, "accuracy": acc, "result": result}
+    return {
+        "model": model.name,
+        "accuracy": acc,
+        "model_args": model_args,
+        "result": result,
+    }
 
 
 if __name__ == "__main__":
@@ -83,14 +95,18 @@ if __name__ == "__main__":
 
     logger.debug(f"Model Arguments: {args.model_args}")
     model_args = format_args(args.model_args)
-    val_ds = load_dataset(args.dataset, args.subset, split="validation")
+    val_ds = load_dataset(args.dataset, args.subset, split=args.split)
     id2label, label2id = label_mapping(val_ds)
-    model = load_model(args.model, label2id=label2id, id2label=id2label, **model_args)
 
-    res = evaluate(model, val_ds)
+    res = evaluate(
+        args.model, val_ds, label2id=label2id, id2label=id2label, model_args=model_args
+    )
 
     time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-    output_folder = os.path.join(args.output_folder, f"{args.model}-{time}")
+    output_folder = os.path.join(
+        args.output_folder,
+        f"{args.model}-{args.dataset}_{args.subset}_{args.split}_{time}",
+    )
     os.makedirs(output_folder, exist_ok=True)
 
     output_file = os.path.join(output_folder, "result.json")
