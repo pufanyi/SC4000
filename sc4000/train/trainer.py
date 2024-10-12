@@ -3,6 +3,7 @@ from typing import Tuple
 
 import argparse
 import wandb
+import os
 
 from sc4000.train.models import load_model, Model
 from sc4000.train.utils.label_utils import label_mapping
@@ -96,5 +97,7 @@ if __name__ == "__main__":
 
     logger.info(f"Loaded model {model.name}")
 
+    output_folder = os.path.join(args.output_dir, model.name)
+
     training_args = eval(args.training_args)
-    model.train(train_ds, val_ds, output_dir=args.output_dir, **training_args)
+    model.train(train_ds, val_ds, output_dir=output_folder, **training_args)
