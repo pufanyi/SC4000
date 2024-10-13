@@ -82,11 +82,10 @@ class ConvNeXtV2(Model):
 
     def apply_train_transforms(self, examples):
         examples["pixel_values"] = [
-            self.train_transforms(image=image.convert("RGB"))
+            self.train_transforms(image=np.array(image.convert("RGB").getdata()))["image"]
             for image in examples["image"]
         ]
         return examples
-
     def apply_val_transforms(self, examples):
         examples["pixel_values"] = [
             self.val_transforms(image=image.convert("RGB"))
