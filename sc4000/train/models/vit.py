@@ -28,7 +28,7 @@ logger = setup_logger(__name__)
 
 class ViT(Model):
     def __init__(
-        self, *, pretrained="google/vit-base-patch16-224", id2label=None, label2id=None
+        self, *, pretrained="google/vit-large-patch16-384", id2label=None, label2id=None
     ):
         super().__init__("ViT")
         self.image_processor = ViTImageProcessor.from_pretrained(pretrained)
@@ -84,8 +84,8 @@ class ViT(Model):
         report_to: str = "wandb",
         save_strategy="epoch",
         eval_strategy: str = "steps",
-        logging_steps: int = 100,
-        eval_steps: int = 500,
+        logging_steps: int = 50,
+        eval_steps: int = 100,
         lr: float = 1e-4,
         weight_decay: float = 0.01,
         num_train_epochs: int = 50,
