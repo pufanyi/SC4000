@@ -102,7 +102,7 @@ if __name__ == "__main__":
     now_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     output_folder = os.path.join(args.output_dir, f"{model.name}_{now_time}")
 
-    training_args = eval(args.training_args)
+    training_args = format_args(args.training_args)
     model.train(train_ds, val_ds, output_dir=output_folder, **training_args)
 
     logger.info(f"Training complete, model saved to {output_folder}")

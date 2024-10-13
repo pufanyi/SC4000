@@ -4,5 +4,8 @@ def format_args(args):
     args_dict = {}
     for arg in args.split(","):
         key, value = arg.split("=")
-        args_dict[key] = value
+        try:
+            args_dict[key] = eval(value)
+        except:
+            args_dict[key] = value
     return args_dict
