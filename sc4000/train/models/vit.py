@@ -98,11 +98,14 @@ class ViT(Model):
         val_ds.set_transform(self.apply_val_transforms)
 
         # Calculate class weights for imbalanced dataset
-        label_counts = train_ds.features['label'].compute_class_weight()
+        label_counts = train_ds.features["label"].compute_class_weight()
         num_samples = sum(label_counts.values())
         num_classes = len(label_counts)
-        class_weights = {label: num_samples / (num_classes * count) for label, count in label_counts.items()}
-        
+        class_weights = {
+            label: num_samples / (num_classes * count)
+            for label, count in label_counts.items()
+        }
+
         train_args = TrainingArguments(
             output_dir=output_dir,
             report_to=report_to,
@@ -138,8 +141,10 @@ class ViT(Model):
 
         # Custom loss function to handle class weights
         def weighted_cross_entropy(logits, labels, weights):
-            loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
-            loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+            loss_fct = torch.nn.CrossEntropyLoss(reduction="none")
+            loss = loss_fct(
+                logits.view(-1, self.model.config.num_labels), labels.view(-1)
+            )
             weighted_loss = (loss * weights).mean()
             return weighted_loss
 
