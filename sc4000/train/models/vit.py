@@ -1,6 +1,7 @@
 from sc4000.train.models.base import Model
 from sc4000.utils.label_utils import label_mapping
 
+import numpy as np
 import torch
 from PIL import Image
 from datasets import Dataset
@@ -85,9 +86,9 @@ class ViT(Model):
         eval_strategy: str = "epoch",
         lr: float = 1e-4,
         weight_decay: float = 0.01,
-        num_train_epochs: int = 40,
-        per_device_train_batch_size: int = 10,
-        per_device_eval_batch_size: int = 4,
+        num_train_epochs: int = 10,
+        per_device_train_batch_size: int = 16,
+        per_device_eval_batch_size: int = 16,
         load_best_model_at_end: bool = True,
         logging_dir: str = "logs",
         remove_unused_columns: bool = False,
@@ -109,6 +110,7 @@ class ViT(Model):
             load_best_model_at_end=load_best_model_at_end,
             logging_dir=logging_dir,
             remove_unused_columns=remove_unused_columns,
+            metric_for_best_model="accuracy",
             **kwargs,
         )
 
@@ -119,6 +121,13 @@ class ViT(Model):
             labels = torch.tensor([example["label"] for example in examples])
             return {"pixel_values": pixel_values, "labels": labels}
 
+        def compute_metrics(eval_pred):
+            predictions, labels = eval_pred
+            predictions = predictions.argmax(axis=1)
+            return {
+                "accuracy": (predictions == labels).astype(np.float32).mean().item()
+            }
+
         trainer = Trainer(
             self.model,
             train_args,
@@ -126,6 +135,7 @@ class ViT(Model):
             eval_dataset=val_ds,
             data_collator=collate_fn,
             tokenizer=self.image_processor,
+            compute_metrics=compute_metrics,
         )
 
         trainer.train()
