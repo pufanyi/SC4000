@@ -10,20 +10,17 @@ from transformers import (
     AutoModelForImageClassification,
     TrainingArguments,
 )
-from torchvision.transforms import ToTensor
-
-from albumentations import (
-    RandomResizedCrop,
-    Normalize,
+from torchvision.transforms import (
     Compose,
-    Transpose,
-    HueSaturationValue,
-    RandomBrightnessContrast,
-    CoarseDropout,
+    Normalize,
+    ToTensor,
+    RandomRotation,
+    RandomHorizontalFlip,
+    RandomVerticalFlip,
+    RandomResizedCrop,
     Resize,
     CenterCrop,
 )
-from albumentations.pytorch import ToTensorV2
 
 from sc4000.utils.logger import setup_logger
 
@@ -58,37 +55,33 @@ class ConvNeXtV2(Model):
         normalize = Normalize(mean=self.image_mean, std=self.image_std)
         self.train_transforms = Compose(
             [
-                RandomResizedCrop(size, size),
-                Transpose(),
-                HueSaturationValue(
-                    hue_shift_limit=0.2, sat_shift_limit=0.2, val_shift_limit=0.2, p=0.5
-                ),
-                RandomBrightnessContrast(
-                    brightness_limit=(-0.1, 0.1), contrast_limit=(-0.1, 0.1), p=0.5
-                ),
+                RandomRotation(degrees=45),
+                RandomResizedCrop(size),
+                RandomHorizontalFlip(),
+                RandomVerticalFlip(),
                 normalize,
-                CoarseDropout(),
-                ToTensorV2(),
+                ToTensor(),
             ]
         )
         self.val_transforms = Compose(
             [
-                Resize(size, size),
-                CenterCrop(size, size),
+                Resize(size),
+                CenterCrop(size),
                 normalize,
-                ToTensorV2(),
+                ToTensor(),
             ]
         )
 
     def apply_train_transforms(self, examples):
         examples["pixel_values"] = [
-            self.train_transforms(image=np.array(image.convert("RGB").getdata()))["image"]
+            self.train_transforms(image.convert("RGB"))["image"]
             for image in examples["image"]
         ]
         return examples
+
     def apply_val_transforms(self, examples):
         examples["pixel_values"] = [
-            self.val_transforms(image=image.convert("RGB"))
+            self.val_transforms(image.convert("RGB"))["image"]
             for image in examples["image"]
         ]
         return examples
