@@ -97,6 +97,12 @@ class ViT(Model):
         train_ds.set_transform(self.apply_train_transforms)
         val_ds.set_transform(self.apply_val_transforms)
 
+        # Calculate class weights for imbalanced dataset
+        label_counts = train_ds.features['label'].compute_class_weight()
+        num_samples = sum(label_counts.values())
+        num_classes = len(label_counts)
+        class_weights = {label: num_samples / (num_classes * count) for label, count in label_counts.items()}
+        
         train_args = TrainingArguments(
             output_dir=output_dir,
             report_to=report_to,
@@ -119,7 +125,9 @@ class ViT(Model):
                 [example["pixel_values"] for example in examples]
             )
             labels = torch.tensor([example["label"] for example in examples])
-            return {"pixel_values": pixel_values, "labels": labels}
+            # Apply class weights
+            weights = torch.tensor([class_weights[label.item()] for label in labels])
+            return {"pixel_values": pixel_values, "labels": labels, "weights": weights}
 
         def compute_metrics(eval_pred):
             predictions, labels = eval_pred
@@ -127,6 +135,13 @@ class ViT(Model):
             return {
                 "accuracy": (predictions == labels).astype(np.float32).mean().item()
             }
+
+        # Custom loss function to handle class weights
+        def weighted_cross_entropy(logits, labels, weights):
+            loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
+            loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+            weighted_loss = (loss * weights).mean()
+            return weighted_loss
 
         trainer = Trainer(
             self.model,
@@ -136,6 +151,7 @@ class ViT(Model):
             data_collator=collate_fn,
             tokenizer=self.image_processor,
             compute_metrics=compute_metrics,
+            loss_fct=weighted_cross_entropy,
         )
 
         trainer.train()
