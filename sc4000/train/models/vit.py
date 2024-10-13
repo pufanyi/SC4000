@@ -35,7 +35,6 @@ class ViT(Model):
         self.image_processor = ViTImageProcessor.from_pretrained(pretrained)
         self.model = ViTForImageClassification.from_pretrained(
             pretrained,
-            num_labels=len(id2label),
             id2label=id2label,
             label2id=label2id,
             ignore_mismatched_sizes=True,
@@ -86,9 +85,9 @@ class ViT(Model):
         eval_strategy: str = "epoch",
         lr: float = 1e-4,
         weight_decay: float = 0.01,
-        num_train_epochs: int = 10,
-        per_device_train_batch_size: int = 16,
-        per_device_eval_batch_size: int = 16,
+        num_train_epochs: int = 40,
+        per_device_train_batch_size: int = 10,
+        per_device_eval_batch_size: int = 4,
         load_best_model_at_end: bool = True,
         logging_dir: str = "logs",
         remove_unused_columns: bool = False,
@@ -113,17 +112,20 @@ class ViT(Model):
             **kwargs,
         )
 
-        def compute_metrics(eval_pred):
-            predictions, labels = eval_pred
-            predictions = predictions.argmax(axis=1)
-            return {"accuracy": (predictions == labels).mean()}
+        def collate_fn(examples):
+            pixel_values = torch.stack(
+                [example["pixel_values"] for example in examples]
+            )
+            labels = torch.tensor([example["label"] for example in examples])
+            return {"pixel_values": pixel_values, "labels": labels}
 
         trainer = Trainer(
-            model=self.model,
-            args=train_args,
+            self.model,
+            train_args,
             train_dataset=train_ds,
             eval_dataset=val_ds,
-            compute_metrics=compute_metrics,
+            data_collator=collate_fn,
+            tokenizer=self.image_processor,
         )
 
         trainer.train()
