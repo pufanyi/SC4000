@@ -89,6 +89,7 @@ class ViT(Model):
         per_device_eval_batch_size: int = 16,
         load_best_model_at_end: bool = True,
         logging_dir: str = "logs",
+        label_smoothing: float = 0.06,
         remove_unused_columns: bool = False,
         **kwargs,
     ):
@@ -139,6 +140,7 @@ class ViT(Model):
             self.model,
             train_args,
             weights=class_weights,
+            label_smoothing=label_smoothing,
             train_dataset=train_ds,
             eval_dataset=val_ds,
             data_collator=collate_fn,
