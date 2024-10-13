@@ -37,6 +37,8 @@ class ViT(Model):
             id2label=id2label,
             label2id=label2id,
             ignore_mismatched_sizes=True,
+            attn_implementation="sdpa",
+            torch_dtype=torch.bfloat16,
         )
 
         self.image_mean, self.image_std = (
