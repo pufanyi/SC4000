@@ -43,7 +43,7 @@ def setup_args():
         "--output_dir",
         type=str,
         help="Directory to save the model to",
-        default="output",
+        default="output/models",
     )
     parser.add_argument(
         "--wandb_project",
