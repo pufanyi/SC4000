@@ -8,6 +8,7 @@ import os
 
 from sc4000.train.models import load_model, Model
 from sc4000.utils.label_utils import label_mapping
+from sc4000.utils.format import format_args
 from sc4000.utils.logger import enable_debug_mode, setup_logger
 
 
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     train_ds, val_ds = get_dataset(args.dataset, args.subset, args.seed)
     id2label, label2id = label_mapping(train_ds)
 
-    model_args = eval(args.model_args)
+    model_args = format_args(args.model_args)
 
     model: Model = load_model(
         args.model, id2label=id2label, label2id=label2id, **model_args

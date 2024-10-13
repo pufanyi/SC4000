@@ -29,7 +29,7 @@ logger = setup_logger(__name__)
 
 class ViT(Model):
     def __init__(
-        self, *, pretrained="google/vit-large-patch16-224", id2label=None, label2id=None
+        self, *, pretrained="google/vit-base-patch16-224", id2label=None, label2id=None
     ):
         super().__init__("ViT")
         self.image_processor = ViTImageProcessor.from_pretrained(pretrained)
