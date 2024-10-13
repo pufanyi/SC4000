@@ -110,6 +110,7 @@ class ViT(Model):
             load_best_model_at_end=load_best_model_at_end,
             logging_dir=logging_dir,
             remove_unused_columns=remove_unused_columns,
+            metric_for_best_model="accuracy",
             **kwargs,
         )
 
