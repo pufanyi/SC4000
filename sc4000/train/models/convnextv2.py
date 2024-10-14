@@ -20,6 +20,7 @@ from torchvision.transforms import (
     RandomResizedCrop,
     Resize,
     CenterCrop,
+    ColorJitter,
 )
 
 from sc4000.utils.logger import setup_logger
@@ -59,30 +60,29 @@ class ConvNeXtV2(Model):
                 RandomResizedCrop(size),
                 RandomHorizontalFlip(),
                 RandomVerticalFlip(),
-                normalize,
+                ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
                 ToTensor(),
+                normalize,
             ]
         )
         self.val_transforms = Compose(
             [
                 Resize(size),
                 CenterCrop(size),
-                normalize,
                 ToTensor(),
+                normalize,
             ]
         )
 
     def apply_train_transforms(self, examples):
         examples["pixel_values"] = [
-            self.train_transforms(image.convert("RGB"))["image"]
-            for image in examples["image"]
+            self.train_transforms(image.convert("RGB")) for image in examples["image"]
         ]
         return examples
 
     def apply_val_transforms(self, examples):
         examples["pixel_values"] = [
-            self.val_transforms(image.convert("RGB"))["image"]
-            for image in examples["image"]
+            self.val_transforms(image.convert("RGB")) for image in examples["image"]
         ]
         return examples
 
@@ -96,7 +96,7 @@ class ConvNeXtV2(Model):
         eval_strategy: str = "steps",
         logging_steps: int = 10,
         eval_steps: int = 100,
-        save_steps: int = 1000,
+        save_steps: int = 500,
         lr: float = 1e-4,
         weight_decay: float = 0.01,
         num_train_epochs: int = 50,
