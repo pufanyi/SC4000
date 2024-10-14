@@ -14,7 +14,8 @@ class WeightedTrainer(Trainer):
         *args,
         weights,
         label_smoothing: float = 0.06,
-        scheduler: str = "reduce_lr_on_plateau",
+        lr_scheduler: str = "reduce_lr_on_plateau",
+        lr_scheduler_kwargs: dict = {},
         use_lora: bool = False,
         **kwargs,
     ):
@@ -27,7 +28,7 @@ class WeightedTrainer(Trainer):
         weights = [weights[w] for w in sorted(list(weights.keys()))]
         self.weight = torch.tensor(weights, dtype=torch.float32)
         self.label_smoothing = label_smoothing
-        self.scheduler_name = scheduler
+        self.scheduler_name = lr_scheduler
         super().__init__(model, *args, **kwargs)
 
     def create_scheduler(

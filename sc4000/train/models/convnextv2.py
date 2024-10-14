@@ -164,6 +164,8 @@ class ConvNeXtV2(Model):
             data_collator=collate_fn,
             tokenizer=self.image_processor,
             compute_metrics=compute_metrics,
+            lr_scheduler="reduce_lr_on_plateau",
+            lr_scheduler_kwargs={"factor": 0.5},
         )
 
         trainer.train()
