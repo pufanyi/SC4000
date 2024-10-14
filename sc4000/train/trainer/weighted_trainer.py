@@ -13,7 +13,7 @@ class WeightedTrainer(Trainer):
         model,
         *args,
         weights,
-        label_smoothing,
+        label_smoothing: float = 0.06,
         scheduler: str = "reduce_lr_on_plateau",
         use_lora: bool = False,
         **kwargs,
