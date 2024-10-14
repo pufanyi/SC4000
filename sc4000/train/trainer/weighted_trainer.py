@@ -1,6 +1,7 @@
 import torch
-from transformers import Trainer, AdamW, Adafactor, get_scheduler
+from transformers import Trainer, get_scheduler, TrainingArguments
 from peft import LoftQConfig, LoraConfig, get_peft_model
+from typing import Dict
 
 from sc4000.utils.logger import setup_logger
 
@@ -11,8 +12,8 @@ class WeightedTrainer(Trainer):
     def __init__(
         self,
         model,
-        *args,
-        weights,
+        args: TrainingArguments,
+        weights: Dict[int, float],
         label_smoothing: float = 0.06,
         lr_scheduler: str = "reduce_lr_on_plateau",
         lr_scheduler_kwargs: dict = {},
@@ -29,7 +30,8 @@ class WeightedTrainer(Trainer):
         self.weight = torch.tensor(weights, dtype=torch.float32)
         self.label_smoothing = label_smoothing
         self.scheduler_name = lr_scheduler
-        super().__init__(model, *args, **kwargs)
+        args.lr_scheduler_kwargs = lr_scheduler_kwargs
+        super().__init__(model, args, **kwargs)
 
     def create_scheduler(
         self, num_training_steps: int, optimizer: torch.optim.Optimizer = None
