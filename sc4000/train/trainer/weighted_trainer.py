@@ -24,13 +24,28 @@ class WeightedTrainer(Trainer):
         weights = [weights[w] for w in sorted(list(weights.keys()))]
         self.weight = torch.tensor(weights, dtype=torch.float32)
         self.label_smoothing = label_smoothing
-        if optimizer == "adamw":
-            self.optimizer = AdamW
-        elif optimizer == "adafactor":
-            self.optimizer = Adafactor
+        self.optimizer_name = optimizer
+        self.scheduler_name = scheduler
+        super().__init__(model, *args, **kwargs)
+
+    def create_optimizer(self):
+        if self.optimizer_name == "adamw":
+            return AdamW(self.model.parameters(), lr=self.args.learning_rate)
+        elif self.optimizer_name == "adafactor":
+            return Adafactor(self.model.parameters(), lr=self.args.learning_rate, scale_parameter=False, relative_step=False)
         else:
-            raise ValueError(f"Unknown optimizer: {optimizer}")
-        super().__init__(*args, **kwargs)
+            raise ValueError(f"Unknown optimizer: {self.optimizer_name}")
+
+    def create_scheduler(self, num_training_steps: int):
+        if self.scheduler_name == "reduce_lr_on_plateau":
+            return torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', factor=0.1, patience=10)
+        else:
+            return get_scheduler(
+                self.scheduler_name,
+                optimizer=self.optimizer,
+                num_warmup_steps=self.args.warmup_steps,
+                num_training_steps=num_training_steps,
+            )
 
     def compute_loss(self, model, inputs, return_outputs=False):
         labels = inputs.get("labels")
