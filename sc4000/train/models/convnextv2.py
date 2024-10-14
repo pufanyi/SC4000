@@ -18,6 +18,7 @@ from torchvision.transforms import (
     RandomHorizontalFlip,
     RandomVerticalFlip,
     RandomResizedCrop,
+    ColorJitter,
     Resize,
     CenterCrop,
 )
@@ -32,7 +33,7 @@ class ConvNeXtV2(Model):
     def __init__(
         self,
         *,
-        pretrained="facebook/convnextv2-large-22k-384",
+        pretrained="facebook/convnextv2-base-22k-384",
         # More models: https://huggingface.co/models?sort=trending&search=facebook+%2F+convnextv2
         id2label=None,
         label2id=None,
@@ -59,30 +60,29 @@ class ConvNeXtV2(Model):
                 RandomResizedCrop(size),
                 RandomHorizontalFlip(),
                 RandomVerticalFlip(),
-                normalize,
+                ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
                 ToTensor(),
+                normalize,
             ]
         )
         self.val_transforms = Compose(
             [
                 Resize(size),
                 CenterCrop(size),
-                normalize,
                 ToTensor(),
+                normalize,
             ]
         )
 
     def apply_train_transforms(self, examples):
         examples["pixel_values"] = [
-            self.train_transforms(image.convert("RGB"))["image"]
-            for image in examples["image"]
+            self.train_transforms(image.convert("RGB")) for image in examples["image"]
         ]
         return examples
 
     def apply_val_transforms(self, examples):
         examples["pixel_values"] = [
-            self.val_transforms(image.convert("RGB"))["image"]
-            for image in examples["image"]
+            self.val_transforms(image.convert("RGB")) for image in examples["image"]
         ]
         return examples
 
