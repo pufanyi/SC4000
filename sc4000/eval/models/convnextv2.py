@@ -6,9 +6,7 @@ from PIL import Image
 
 
 class ConvNeXtV2(Model):
-    def __init__(
-        self, *, pretrained="google/vit-large-patch16-224", id2label=None, label2id=None
-    ):
+    def __init__(self, *, pretrained, id2label=None, label2id=None):
         super().__init__("ConvNeXtV2")
         self.image_processor = AutoImageProcessor.from_pretrained(pretrained)
         self.model = AutoModelForImageClassification.from_pretrained(
