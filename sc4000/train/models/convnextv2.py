@@ -33,7 +33,7 @@ class ConvNeXtV2(Model):
     def __init__(
         self,
         *,
-        pretrained="facebook/convnextv2-base-22k-384",
+        pretrained="facebook/convnextv2-large-22k-384",
         # More models: https://huggingface.co/models?sort=trending&search=facebook+%2F+convnextv2
         id2label=None,
         label2id=None,
@@ -96,7 +96,7 @@ class ConvNeXtV2(Model):
         eval_strategy: str = "steps",
         logging_steps: int = 10,
         eval_steps: int = 100,
-        save_steps: int = 1000,
+        save_steps: int = 500,
         lr: float = 1e-4,
         weight_decay: float = 0.01,
         num_train_epochs: int = 50,
