@@ -1,5 +1,5 @@
 from sc4000.train.models.base import Model
-from sc4000.train.trainer.weighted_trainer import WeightedTrainer
+from sc4000.train.trainer.sc4000_trainer import SC4000Trainer
 
 import numpy as np
 import torch
@@ -154,7 +154,7 @@ class ConvNeXtV2(Model):
                 "accuracy": (predictions == labels).astype(np.float32).mean().item()
             }
 
-        trainer = WeightedTrainer(
+        trainer = SC4000Trainer(
             self.model,
             train_args,
             weights=class_weights,

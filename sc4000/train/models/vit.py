@@ -1,5 +1,5 @@
 from sc4000.train.models.base import Model
-from sc4000.train.trainer.weighted_trainer import WeightedTrainer
+from sc4000.train.trainer.sc4000_trainer import SC4000Trainer
 
 import numpy as np
 import torch
@@ -11,13 +11,16 @@ from transformers import (
     TrainingArguments,
 )
 from torchvision.transforms import (
-    CenterCrop,
     Compose,
     Normalize,
-    RandomHorizontalFlip,
-    RandomResizedCrop,
     ToTensor,
+    RandomRotation,
+    RandomHorizontalFlip,
+    RandomVerticalFlip,
+    RandomResizedCrop,
+    ColorJitter,
     Resize,
+    CenterCrop,
 )
 
 from sc4000.utils.logger import setup_logger
@@ -49,8 +52,11 @@ class ViT(Model):
         normalize = Normalize(mean=self.image_mean, std=self.image_std)
         self.train_transforms = Compose(
             [
+                RandomRotation(degrees=45),
                 RandomResizedCrop(size),
                 RandomHorizontalFlip(),
+                RandomVerticalFlip(),
+                ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
                 ToTensor(),
                 normalize,
             ]
@@ -144,7 +150,7 @@ class ViT(Model):
                 "accuracy": (predictions == labels).astype(np.float32).mean().item()
             }
 
-        trainer = WeightedTrainer(
+        trainer = SC4000Trainer(
             self.model,
             train_args,
             weights=class_weights,

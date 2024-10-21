@@ -8,7 +8,7 @@ from sc4000.utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-class WeightedTrainer(Trainer):
+class SC4000Trainer(Trainer):
     def __init__(
         self,
         model,
@@ -16,10 +16,12 @@ class WeightedTrainer(Trainer):
         weights: Dict[int, float],
         label_smoothing: float = 0.06,
         lr_scheduler: str = "reduce_lr_on_plateau",
-        lr_scheduler_kwargs: dict = {},
+        lr_scheduler_kwargs: dict = None,
         use_lora: bool = False,
-        **kwargs,
+        **kwargs
     ):
+        if lr_scheduler_kwargs is None:
+            lr_scheduler_kwargs = {}
         if use_lora:
             self.loftq_config = LoftQConfig()
             self.lora_config = LoraConfig(
@@ -45,13 +47,13 @@ class WeightedTrainer(Trainer):
         )
         return self.lr_scheduler
 
-    def compute_loss(self, model, inputs, return_outputs=False):
-        labels = inputs.get("labels")
-        outputs = model(**inputs)
-        logits = outputs.get("logits")
-        loss_fct = torch.nn.CrossEntropyLoss(
-            weight=self.weight.to(logits.dtype).to(logits.device),
-            label_smoothing=self.label_smoothing,
-        )
-        loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-        return (loss, outputs) if return_outputs else loss
+    # def compute_loss(self, model, inputs, return_outputs=False):
+    #     labels = inputs.get("labels")
+    #     outputs = model(**inputs)
+    #     logits = outputs.get("logits")
+    #     loss_fct = torch.nn.CrossEntropyLoss(
+    #         weight=self.weight.to(logits.dtype).to(logits.device),
+    #         label_smoothing=self.label_smoothing,
+    #     )
+    #     loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+    #     return (loss, outputs) if return_outputs else loss

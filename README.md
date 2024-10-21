@@ -1,5 +1,7 @@
 # CassavaLeafDiseaseClassification
 
+[Kaggle Competition](https://www.kaggle.com/competitions/cassava-leaf-disease-classification/overview)
+
 ## Installation
 
 ```sh
