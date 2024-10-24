@@ -47,15 +47,17 @@ def setup_args():
         help="Directory to save the model to",
         default="output/eval",
     )
+    parser.add_argument(
+        "--batch_size", type=int, help="Batch size for training", default=16
+    )
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     return parser.parse_args()
 
 
-def evaluate(model: Model, val_ds: Dataset, label2id, id2label, model_args):
+def evaluate(model: Model, val_ds: Dataset, batch_size, label2id, id2label, model_args):
     model = load_model(args.model, label2id=label2id, id2label=id2label, **model_args)
     result = []
     correct_num = 0
-    batch_size = 16
 
     for i in tqdm(range(0, len(val_ds), batch_size), desc=f"Evaluating {model.name}"):
         batch = val_ds[i : i + batch_size]
@@ -106,7 +108,12 @@ if __name__ == "__main__":
     id2label, label2id = label_mapping(val_ds)
 
     res = evaluate(
-        args.model, val_ds, label2id=label2id, id2label=id2label, model_args=model_args
+        args.model,
+        val_ds,
+        batch_size=args.batch_size,
+        label2id=label2id,
+        id2label=id2label,
+        model_args=model_args,
     )
 
     time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
