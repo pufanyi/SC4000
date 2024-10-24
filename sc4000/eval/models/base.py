@@ -1,3 +1,5 @@
+from typing import List
+
 from abc import ABC, abstractmethod
 from PIL import Image
 
@@ -10,5 +12,5 @@ class Model(object):
         self.device = device
 
     @abstractmethod
-    def predict(self, images: List[Image.Image]) -> Result:
+    def predict(self, images: List[Image.Image]) -> List[Result]:
         raise NotImplementedError

@@ -55,29 +55,29 @@ def evaluate(model: Model, val_ds: Dataset, label2id, id2label, model_args):
     model = load_model(args.model, label2id=label2id, id2label=id2label, **model_args)
     result = []
     correct_num = 0
-    batch_size = 32  # You can adjust this based on your memory constraints
+    batch_size = 16
 
     for i in tqdm(range(0, len(val_ds), batch_size), desc=f"Evaluating {model.name}"):
-        batch = val_ds[i:i+batch_size]
-        images = [example["image"] for example in batch]
-        predictions = model.predict(images)
+        batch = val_ds[i : i + batch_size]
+        predictions = model.predict(batch["image"])
 
-        for example, prediction in zip(batch, predictions):
-            id = example["image_id"]
+        for id, label, prediction in zip(
+            batch["image_id"], batch["label"], predictions
+        ):
             res = prediction.prediction
             logs = prediction.logs
-            correct = example["label"] == res
+            correct = res == label
             result.append(
                 {
                     "image_id": id,
-                    "answer": example["label"],
+                    "answer": label,
                     "prediction": res,
                     "logs": logs,
                     "correct": correct,
                 }
             )
             logger.debug(
-                f"Image ID: {id}, Correct: {correct}, Prediction: {res}, Answer: {example['label']}, Logs: {logs}"
+                f"Image ID: {id}, Correct: {correct}, Prediction: {res}, Answer: {label}, Logs: {logs}"
             )
             correct_num += correct
 
@@ -91,6 +91,7 @@ def evaluate(model: Model, val_ds: Dataset, label2id, id2label, model_args):
         "model_args": model_args,
         "result": result,
     }
+
 
 if __name__ == "__main__":
     args = setup_args()
