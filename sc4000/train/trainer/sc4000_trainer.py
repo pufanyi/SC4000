@@ -18,7 +18,7 @@ class SC4000Trainer(Trainer):
         lr_scheduler: str = "reduce_lr_on_plateau",
         lr_scheduler_kwargs: dict = None,
         use_lora: bool = False,
-        **kwargs
+        **kwargs,
     ):
         if lr_scheduler_kwargs is None:
             lr_scheduler_kwargs = {}

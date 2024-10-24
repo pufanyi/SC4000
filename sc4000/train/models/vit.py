@@ -92,7 +92,7 @@ class ViT(Model):
         eval_strategy: str = "steps",
         logging_steps: int = 10,
         eval_steps: int = 100,
-        save_steps: int = 1000,
+        save_steps: int = 500,
         lr: float = 1e-4,
         weight_decay: float = 0.01,
         num_train_epochs: int = 50,
@@ -160,6 +160,8 @@ class ViT(Model):
             data_collator=collate_fn,
             tokenizer=self.image_processor,
             compute_metrics=compute_metrics,
+            lr_scheduler="reduce_lr_on_plateau",
+            lr_scheduler_kwargs={"factor": 0.5, "min_lr": 5e-6},
         )
 
         trainer.train()
