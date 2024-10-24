@@ -96,7 +96,7 @@ class ConvNeXtV2(Model):
         eval_strategy: str = "steps",
         logging_steps: int = 10,
         eval_steps: int = 100,
-        save_steps: int = 500,
+        save_steps: int = 100,
         lr: float = 1e-4,
         weight_decay: float = 0.01,
         num_train_epochs: int = 50,
@@ -165,7 +165,7 @@ class ConvNeXtV2(Model):
             tokenizer=self.image_processor,
             compute_metrics=compute_metrics,
             lr_scheduler="reduce_lr_on_plateau",
-            lr_scheduler_kwargs={"factor": 0.5, "min_lr": 5e-6},
+            lr_scheduler_kwargs={"factor": 0.5, "min_lr": 1e-5, "patience": 20},
             # lr_scheduler="cosine_with_restarts",
         )
 
