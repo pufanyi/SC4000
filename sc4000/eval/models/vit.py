@@ -23,7 +23,7 @@ class ViT(Model):
         pretrained="google/vit-large-patch16-224",
         id2label=None,
         label2id=None,
-        device=None
+        device=None,
     ):
         super().__init__("ViT", device=device)
         self.image_processor = ViTImageProcessor.from_pretrained(pretrained)
@@ -50,8 +50,13 @@ class ViT(Model):
         )
 
     def predict(self, images: List[Image.Image]) -> List[Result]:
-        batch_inputs = torch.stack([self.test_transforms(image.convert("RGB")) for image in images]).to(self.device)
+        batch_inputs = torch.stack(
+            [self.test_transforms(image.convert("RGB")) for image in images]
+        ).to(self.device)
         outputs = self.model(batch_inputs)
         logits_list = outputs.logits.detach().cpu().numpy().tolist()
         predictions = outputs.logits.argmax(dim=-1).tolist()
-        return [Result(prediction=pred, logs=logits) for pred, logits in zip(predictions, logits_list)]
+        return [
+            Result(prediction=pred, logs=logits)
+            for pred, logits in zip(predictions, logits_list)
+        ]
