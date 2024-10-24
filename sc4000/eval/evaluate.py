@@ -1,5 +1,6 @@
 import json
 import os
+import torch
 
 from datetime import datetime
 from argparse import ArgumentParser
@@ -51,7 +52,8 @@ def setup_args():
 
 
 def evaluate(model: Model, val_ds: Dataset, label2id, id2label, model_args):
-    model = load_model(args.model, label2id=label2id, id2label=id2label, **model_args)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = load_model(args.model, label2id=label2id, id2label=id2label, **model_args).to(device)
     result = []
     correct_num = 0
     for example in tqdm(val_ds, desc=f"Evaluating {model.name}"):
