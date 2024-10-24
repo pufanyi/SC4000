@@ -19,7 +19,7 @@ class ConvNeXtV2(Model):
     def predict(self, image: Image.Image) -> Result:
         inputs = self.image_processor(image, return_tensors="pt").to(self.device)
         outputs = self.model(**inputs)
-        logists_list = list(map(float, outputs.logits[0].detach().numpy()))
+        logists_list = list(map(float, outputs.logits[0].detach().cpu().numpy()))
         return Result(
             prediction=outputs.logits.argmax(dim=-1).item(), logs=logists_list
         )

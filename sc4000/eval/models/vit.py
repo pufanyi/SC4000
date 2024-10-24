@@ -7,7 +7,12 @@ from PIL import Image
 
 class ViT(Model):
     def __init__(
-        self, *, pretrained="google/vit-large-patch16-224", id2label=None, label2id=None, device=None
+        self,
+        *,
+        pretrained="google/vit-large-patch16-224",
+        id2label=None,
+        label2id=None,
+        device=None
     ):
         super().__init__("ViT", device=device)
         self.image_processor = ViTImageProcessor.from_pretrained(pretrained)
@@ -21,7 +26,7 @@ class ViT(Model):
     def predict(self, image: Image.Image) -> Result:
         inputs = self.image_processor(image, return_tensors="pt").to(self.device)
         outputs = self.model(**inputs)
-        logists_list = list(map(float, outputs.logits[0].detach().numpy()))
+        logists_list = list(map(float, outputs.logits[0].detach().cpu().numpy()))
         return Result(
             prediction=outputs.logits.argmax(dim=-1).item(), logs=logists_list
         )
