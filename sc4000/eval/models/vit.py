@@ -1,3 +1,6 @@
+import torch
+
+
 from sc4000.eval.models.base import Model
 from sc4000.eval.utils.results import Result
 
@@ -46,8 +49,9 @@ class ViT(Model):
             ]
         )
 
-    def predict(self, image: Image.Image) -> Result:
-        inputs = self.test_transforms(image.convert("RGB")).unsqueeze(0).to(self.device)
-        outputs = self.model(inputs)
-        logits_list = outputs.logits[0].detach().cpu().numpy().tolist()
-        return Result(prediction=outputs.logits.argmax(dim=-1).item(), logs=logits_list)
+    def predict(self, images: List[Image.Image]) -> List[Result]:
+        batch_inputs = torch.stack([self.test_transforms(image.convert("RGB")) for image in images]).to(self.device)
+        outputs = self.model(batch_inputs)
+        logits_list = outputs.logits.detach().cpu().numpy().tolist()
+        predictions = outputs.logits.argmax(dim=-1).tolist()
+        return [Result(prediction=pred, logs=logits) for pred, logits in zip(predictions, logits_list)]
