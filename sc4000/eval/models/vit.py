@@ -10,6 +10,7 @@ from torchvision.transforms import (
     Resize,
     CenterCrop,
 )
+from typing import List
 
 
 class ViT(Model):

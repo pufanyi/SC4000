@@ -10,5 +10,5 @@ class Model(object):
         self.device = device
 
     @abstractmethod
-    def predict(self, image: Image.Image) -> Result:
+    def predict(self, images: List[Image.Image]) -> Result:
         raise NotImplementedError

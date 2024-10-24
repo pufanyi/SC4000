@@ -55,26 +55,32 @@ def evaluate(model: Model, val_ds: Dataset, label2id, id2label, model_args):
     model = load_model(args.model, label2id=label2id, id2label=id2label, **model_args)
     result = []
     correct_num = 0
-    for example in tqdm(val_ds, desc=f"Evaluating {model.name}"):
-        id = example["image_id"]
-        image = example["image"]
-        prediction = model.predict(image)
-        res = prediction.prediction
-        logs = prediction.logs
-        correct = example["label"] == res
-        result.append(
-            {
-                "image_id": id,
-                "answer": example["label"],
-                "prediction": res,
-                "logs": logs,
-                "correct": correct,
-            }
-        )
-        logger.debug(
-            f"Image ID: {id}, Correct: {correct}, Prediction: {res}, Answer: {example['label']}, Logs: {logs}"
-        )
-        correct_num += correct
+    batch_size = 32  # You can adjust this based on your memory constraints
+
+    for i in tqdm(range(0, len(val_ds), batch_size), desc=f"Evaluating {model.name}"):
+        batch = val_ds[i:i+batch_size]
+        images = [example["image"] for example in batch]
+        predictions = model.predict(images)
+
+        for example, prediction in zip(batch, predictions):
+            id = example["image_id"]
+            res = prediction.prediction
+            logs = prediction.logs
+            correct = example["label"] == res
+            result.append(
+                {
+                    "image_id": id,
+                    "answer": example["label"],
+                    "prediction": res,
+                    "logs": logs,
+                    "correct": correct,
+                }
+            )
+            logger.debug(
+                f"Image ID: {id}, Correct: {correct}, Prediction: {res}, Answer: {example['label']}, Logs: {logs}"
+            )
+            correct_num += correct
+
     acc = correct_num / len(val_ds)
 
     logger.info(f"Accuracy for {model.name}: {acc}")
@@ -85,7 +91,6 @@ def evaluate(model: Model, val_ds: Dataset, label2id, id2label, model_args):
         "model_args": model_args,
         "result": result,
     }
-
 
 if __name__ == "__main__":
     args = setup_args()
