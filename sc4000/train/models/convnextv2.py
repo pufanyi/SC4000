@@ -21,6 +21,9 @@ from torchvision.transforms import (
     ColorJitter,
     Resize,
     CenterCrop,
+    GaussianBlur,
+    RandomGrayscale,
+    RandomErasing,
 )
 
 from sc4000.utils.logger import setup_logger
@@ -33,7 +36,7 @@ class ConvNeXtV2(Model):
     def __init__(
         self,
         *,
-        pretrained="facebook/convnextv2-base-22k-384",
+        pretrained="facebook/convnextv2-large-22k-384",
         # More models: https://huggingface.co/models?sort=trending&search=facebook+%2F+convnextv2
         id2label=None,
         label2id=None,
@@ -61,8 +64,12 @@ class ConvNeXtV2(Model):
                 RandomHorizontalFlip(),
                 RandomVerticalFlip(),
                 ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
+                GaussianBlur(kernel_size=(5, 9), sigma=(0.1, 5)),
+                # RandomAffine(degrees=45, translate=(0.1, 0.1), scale=(0.8, 1.2), shear=10),
+                RandomGrayscale(p=0.2),
                 ToTensor(),
                 normalize,
+                RandomErasing(p=0.3, scale=(0.02, 0.2), ratio=(0.3, 3.3), value=0),
             ]
         )
         self.val_transforms = Compose(
