@@ -57,7 +57,7 @@ def setup_args():
         help="Name of the Weights and Biases run",
         default="default",
     )
-    parser.add_argument("--seed", type=int, help="Seed for reproducibility", default=42)
+    parser.add_argument("--seed", type=int, help="Seed for reproducibility", default=28)
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     return parser.parse_args()
 
