@@ -68,12 +68,13 @@ class MobileNetV3(Model):
     def train_image_transforms(self, images):
         for fn in self.train_transforms:
             images = tf.map_fn(fn, images)
+        # print(images)
         return images
 
     def val_image_transforms(self, images):
         for fn in self.val_transforms:
             # image = fn(image)
-            image = tf.map_fn(fn, images)
+            images = tf.map_fn(fn, images)
         return images
 
     def train_map(self, item):
@@ -122,16 +123,20 @@ class MobileNetV3(Model):
 
         tf_train_ds = train_ds.to_tf_dataset(
             columns=["image", "one_hot_label"],
-            batch_size=1,
+            batch_size=train_batch_size,
             # collate_fn=self.collate_fn,
         )
         tf_val_ds = val_ds.to_tf_dataset(
             columns=["image", "one_hot_label"],
-            batch_size=1,
+            batch_size=eval_batch_size,
             # collate_fn=self.collate_fn,
         )
 
-        self.model.compile(optimizer=optimizer, loss="categorical_crossentropy")
+        self.model.compile(
+            optimizer=keras.optimizers.Adam(learning_rate=lr),
+            loss=keras.losses.CategoricalCrossentropy(from_logits=False),
+            metrics=["accuracy"],
+        )
 
         tf_train_ds = tf_train_ds.map(
             self.train_map, num_parallel_calls=tf.data.AUTOTUNE
