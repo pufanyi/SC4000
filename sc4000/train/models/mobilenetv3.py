@@ -96,12 +96,8 @@ class MobileNetV3(Model):
         self.kwargs = kwargs
         self.image_size = image_size
 
-        tf_train_ds = train_ds.to_tf_dataset(
-            batch_size=train_batch_size, columns=["image", "label"]
-        )
-        tf_val_ds = val_ds.to_tf_dataset(
-            batch_size=eval_batch_size, columns=["image", "label"]
-        )
+        tf_train_ds = train_ds.to_tf_dataset(columns=["image", "label"])
+        tf_val_ds = val_ds.to_tf_dataset(columns=["image", "label"])
 
         self.model.compile(
             optimizer=optimizer,
