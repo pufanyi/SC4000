@@ -1,6 +1,7 @@
 from math import e
 import numpy as np
 import matplotlib.pyplot as plt
+from tf_keras.src.backend import one_hot
 from torch import optim
 import wandb
 
@@ -22,7 +23,7 @@ class MobileNetV3(Model):
     def __init__(
         self,
         *,
-        pretrained: str = "https://kaggle.com/models/google/cropnet/frameworks/TensorFlow2/variations/feature-vector-concat/versions/1",
+        pretrained: str = "https://tfhub.dev/google/cropnet/classifier/cassava_disease_V1/2",
         image_size=224,
         batch_norm_momentum: float = 0.997,
         num_classes: int = 5,
@@ -52,30 +53,41 @@ class MobileNetV3(Model):
             ),
         ]
 
+    def collate_fn(self, batch):
+        images = [item["image"] for item in batch]
+        labels = [item["one_hot_label"] for item in batch]
+        logger.info(labels)
+        logger.info(tf.stack(labels))
+        return {"image": tf.stack(images), "one_hot_label": tf.stack(labels)}
+
     def get_target(self, label):
-        target = tf.one_hot(label, self.num_classes + 1)
-        logger.debug(f"Target: {target}")
-        return target
+        one_hot_label = [0.0] * (self.num_classes + 1)
+        one_hot_label[label] = 1.0
+        return one_hot_label
 
-    def train_image_transforms(self, image):
+    def train_image_transforms(self, images):
         for fn in self.train_transforms:
-            image = fn(image)
-        return image
+            images = tf.map_fn(fn, images)
+        return images
 
-    def val_image_transforms(self, image):
+    def val_image_transforms(self, images):
         for fn in self.val_transforms:
-            image = fn(image)
-        return image
+            images = tf.map_fn(fn, images)
+        return images
 
     def train_map(self, item):
-        return self.train_image_transforms(item["image"]), self.get_target(
-            item["label"]
+        logger.info(item["one_hot_label"])
+        return (
+            self.train_image_transforms(item["image"]),
+            # self.get_target(item["one_hot_label"])
+            item["one_hot_label"],
         )
 
     def val_map(self, item):
         return (
             self.val_image_transforms(item["image"]),
-            self.get_target(item["label"]),
+            item["one_hot_label"],
+            # self.get_target(item["one_hot_label"]),
         )
 
     def train(
@@ -86,38 +98,47 @@ class MobileNetV3(Model):
         optimizer: str = "rmsprop",
         lr: float = 1e-4,
         early_stopping_patience: int = 5,
-        train_batch_size: int = 64,
-        eval_batch_size: int = 64,
+        train_batch_size: int = 32,
+        eval_batch_size: int = 32,
         lr_reduce_patience: int = 3,
         image_size: int = 224,
         lr_reduce_min_delta: float = 1e-4,
         **kwargs,
     ):
-        logger.info(f"GPU available: {tf.config.list_physical_devices('GPU')}")
-
         train_steps = len(train_ds) // train_batch_size
 
         self.kwargs = kwargs
         self.image_size = image_size
 
-        tf_train_ds = train_ds.to_tf_dataset(columns=["image", "label"])
-        tf_val_ds = val_ds.to_tf_dataset(columns=["image", "label"])
+        # train_one_hot_labels = [tf.one_hot(label, self.num_classes) for label in train_ds["label"]]
+        # val_one_hot_labels = [tf.one_hot(label, self.num_classes) for label in val_ds["label"]]
+
+        train_one_hot_labels = [self.get_target(label) for label in train_ds["label"]]
+        val_one_hot_labels = [self.get_target(label) for label in val_ds["label"]]
+
+        train_ds = train_ds.add_column("one_hot_label", train_one_hot_labels)
+        val_ds = val_ds.add_column("one_hot_label", val_one_hot_labels)
+
+        tf_train_ds = train_ds.to_tf_dataset(
+            columns=["image", "one_hot_label"],
+            batch_size=train_batch_size,
+            collate_fn=self.collate_fn,
+        )
+        tf_val_ds = val_ds.to_tf_dataset(
+            columns=["image", "one_hot_label"],
+            batch_size=eval_batch_size,
+            collate_fn=self.collate_fn,
+        )
 
         self.model.compile(
             optimizer=optimizer,
             loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         )
 
-        tf_train_ds = (
-            tf_train_ds.map(self.train_map, num_parallel_calls=tf.data.AUTOTUNE)
-            .batch(train_batch_size)
-            .prefetch(tf.data.AUTOTUNE)
+        tf_train_ds = tf_train_ds.map(
+            self.train_map, num_parallel_calls=tf.data.AUTOTUNE
         )
-        tf_val_ds = (
-            tf_val_ds.map(self.val_map, num_parallel_calls=tf.data.AUTOTUNE)
-            .batch(eval_batch_size)
-            .prefetch(tf.data.AUTOTUNE)
-        )
+        tf_val_ds = tf_val_ds.map(self.val_map, num_parallel_calls=tf.data.AUTOTUNE)
 
         self.model.fit(
             tf_train_ds,
