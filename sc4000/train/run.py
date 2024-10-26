@@ -59,14 +59,21 @@ def setup_args():
     )
     parser.add_argument("--seed", type=int, help="Seed for reproducibility", default=28)
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument(
+        "--disable_wandb", action="store_true", help="Disable Weights and Biases"
+    )
     return parser.parse_args()
 
 
 def setup_wandb(args):
-    wandb.init(
-        project=args.wandb_project,
-        name=args.wandb_run_name,
-    )
+    if not args.disable_wandb:
+        wandb.init(
+            project=args.wandb_project,
+            name=args.wandb_run_name,
+        )
+        logger.info("Weights and Biases initialized")
+    else:
+        logger.info("Weights and Biases disabled")
 
 
 def get_dataset(
