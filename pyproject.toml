@@ -30,8 +30,8 @@ dependencies = [
     "matplotlib==3.9.2",
     "tensorflow_datasets==4.9.6",
     "tensorflow_hub==0.16.1",
-    "tf-keras==2.18.0",
-    "tensorflow==2.18.0",
+    "tf-keras==2.17.0",
+    "tensorflow==2.17.0",
 ]
 
 [project.urls]

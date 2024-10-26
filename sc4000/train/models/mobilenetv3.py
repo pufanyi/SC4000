@@ -53,7 +53,9 @@ class MobileNetV3(Model):
         ]
 
     def get_target(self, label):
-        return tf.one_hot(label, self.num_classes + 1)
+        target = tf.one_hot(label, self.num_classes + 1)
+        logger.debug(f"Target: {target}")
+        return target
 
     def train_image_transforms(self, image):
         for fn in self.train_transforms:
@@ -91,6 +93,8 @@ class MobileNetV3(Model):
         lr_reduce_min_delta: float = 1e-4,
         **kwargs,
     ):
+        logger.info(f"GPU available: {tf.config.list_physical_devices('GPU')}")
+
         train_steps = len(train_ds) // train_batch_size
 
         self.kwargs = kwargs
