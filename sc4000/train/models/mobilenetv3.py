@@ -116,7 +116,7 @@ class MobileNetV3(Model):
         )
 
         self.model.fit(
-            train_ds,
+            tf_train_ds,
             validation_data=tf_val_ds,
             epochs=500,
             steps_per_epoch=train_steps,
