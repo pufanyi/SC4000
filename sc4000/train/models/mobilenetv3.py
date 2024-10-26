@@ -72,7 +72,8 @@ class MobileNetV3(Model):
 
     def val_image_transforms(self, images):
         for fn in self.val_transforms:
-            images = tf.map_fn(fn, images)
+            # image = fn(image)
+            image = tf.map_fn(fn, images)
         return images
 
     def train_map(self, item):
@@ -98,7 +99,7 @@ class MobileNetV3(Model):
         optimizer: str = "rmsprop",
         lr: float = 1e-4,
         early_stopping_patience: int = 5,
-        train_batch_size: int = 32,
+        train_batch_size: int = 31,
         eval_batch_size: int = 32,
         lr_reduce_patience: int = 3,
         image_size: int = 224,
@@ -121,24 +122,29 @@ class MobileNetV3(Model):
 
         tf_train_ds = train_ds.to_tf_dataset(
             columns=["image", "one_hot_label"],
-            batch_size=train_batch_size,
-            collate_fn=self.collate_fn,
+            batch_size=1,
+            # collate_fn=self.collate_fn,
         )
         tf_val_ds = val_ds.to_tf_dataset(
             columns=["image", "one_hot_label"],
-            batch_size=eval_batch_size,
-            collate_fn=self.collate_fn,
+            batch_size=1,
+            # collate_fn=self.collate_fn,
         )
 
-        self.model.compile(
-            optimizer=optimizer,
-            loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-        )
+        self.model.compile(optimizer=optimizer, loss="categorical_crossentropy")
 
         tf_train_ds = tf_train_ds.map(
             self.train_map, num_parallel_calls=tf.data.AUTOTUNE
         )
         tf_val_ds = tf_val_ds.map(self.val_map, num_parallel_calls=tf.data.AUTOTUNE)
+
+        for images, labels in tf_train_ds.take(1):
+            logger.info(f"Sample train batch images shape: {images.shape}")
+            logger.info(f"Sample train batch labels shape: {labels.shape}")
+
+        for images, labels in tf_val_ds.take(1):
+            logger.info(f"Sample val batch images shape: {images.shape}")
+            logger.info(f"Sample val batch labels shape: {labels.shape}")
 
         self.model.fit(
             tf_train_ds,
