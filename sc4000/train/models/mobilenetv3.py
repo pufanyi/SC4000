@@ -100,7 +100,7 @@ class MobileNetV3(Model):
         optimizer: str = "rmsprop",
         lr: float = 1e-4,
         early_stopping_patience: int = 5,
-        train_batch_size: int = 31,
+        train_batch_size: int = 32,
         eval_batch_size: int = 32,
         lr_reduce_patience: int = 3,
         image_size: int = 224,
@@ -124,11 +124,13 @@ class MobileNetV3(Model):
         tf_train_ds = train_ds.to_tf_dataset(
             columns=["image", "one_hot_label"],
             batch_size=train_batch_size,
+            drop_remainder=True,
             # collate_fn=self.collate_fn,
         )
         tf_val_ds = val_ds.to_tf_dataset(
             columns=["image", "one_hot_label"],
             batch_size=eval_batch_size,
+            drop_remainder=True,
             # collate_fn=self.collate_fn,
         )
 
@@ -179,6 +181,6 @@ class MobileNetV3(Model):
         if not model_dir.exists():
             model_dir.mkdir(parents=True)
 
-        self.model.save(str(dir))
+        self.model.save(model_dir)
 
         logger.info(f"Model saved to {model_dir}")
