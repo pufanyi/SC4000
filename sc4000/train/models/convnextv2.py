@@ -36,7 +36,7 @@ class ConvNeXtV2(Model):
     def __init__(
         self,
         *,
-        pretrained="facebook/convnextv2-large-22k-384",
+        pretrained="facebook/convnextv2-base-22k-384",
         # More models: https://huggingface.co/models?sort=trending&search=facebook+%2F+convnextv2
         id2label=None,
         label2id=None,
@@ -103,7 +103,7 @@ class ConvNeXtV2(Model):
         eval_strategy: str = "steps",
         logging_steps: int = 10,
         eval_steps: int = 100,
-        save_steps: int = 100,
+        save_steps: int = 500,
         lr: float = 1e-4,
         weight_decay: float = 0.01,
         num_train_epochs: int = 50,
@@ -113,8 +113,10 @@ class ConvNeXtV2(Model):
         logging_dir: str = "logs",
         label_smoothing: float = 0.06,
         remove_unused_columns: bool = False,
+        num_warmup_steps: int = 500,
         **kwargs,
     ):
+        # lr /= num_warmup_steps
         label_counts = Counter(train_ds["label"])
         num_samples = sum(label_counts.values())
         num_classes = len(label_counts)
@@ -144,6 +146,7 @@ class ConvNeXtV2(Model):
             logging_dir=logging_dir,
             remove_unused_columns=remove_unused_columns,
             metric_for_best_model="accuracy",
+            warmup_steps=num_warmup_steps,
             **kwargs,
         )
 
@@ -171,9 +174,13 @@ class ConvNeXtV2(Model):
             data_collator=collate_fn,
             tokenizer=self.image_processor,
             compute_metrics=compute_metrics,
-            lr_scheduler="reduce_lr_on_plateau",
-            lr_scheduler_kwargs={"factor": 0.5, "min_lr": 1e-5, "patience": 20},
-            # lr_scheduler="cosine_with_restarts",
+            # lr_scheduler="reduce_lr_on_plateau",
+            # lr_scheduler_kwargs={"factor": 0.5, "min_lr": 1e-5, "patience": 20},
+            lr_scheduler="cosine",
+            lr_scheduler_kwargs={
+                "num_cycles": 0.5,
+                "num_warmup_steps": num_warmup_steps,
+            },
         )
 
         trainer.train()
