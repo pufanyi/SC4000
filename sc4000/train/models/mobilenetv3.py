@@ -1,3 +1,4 @@
+import random
 import tensorflow as tf
 import tf_keras as keras
 import tensorflow_hub as hub
@@ -13,6 +14,12 @@ from sc4000.utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+def random_rotation_fn(image: tf.Tensor, p=0.5):
+    if tf.random.uniform([]) < p:
+        return tf.image.rot90(image, k=random.randint(0, 3))
+    return image
+
+
 class MobileNetV3(Model):
     def __init__(
         self,
@@ -20,7 +27,7 @@ class MobileNetV3(Model):
         pretrained: str = "https://tfhub.dev/google/cropnet/classifier/cassava_disease_V1/2",
         image_size=224,
         num_classes: int = 5,
-        resize_scale: float = 1.3,
+        resize_scale: float = 1.5,
         **kwargs,
     ):
         super().__init__("MobileNetV3")
@@ -38,7 +45,7 @@ class MobileNetV3(Model):
         self.train_transforms = [
             tf.image.random_flip_left_right,
             tf.image.random_flip_up_down,
-            lambda img: tf.image.random_jpeg_quality(img, 75, 95),
+            random_rotation_fn,
             lambda img: tf.image.random_brightness(img, 0.2),
             lambda img: tf.image.random_contrast(img, 0.2, 0.5),
             lambda img: tf.image.random_hue(img, 0.2),
