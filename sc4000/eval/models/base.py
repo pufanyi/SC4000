@@ -7,7 +7,7 @@ from sc4000.eval.utils.results import Result
 
 
 class Model(object):
-    def __init__(self, name: str, device):
+    def __init__(self, name: str, device=None):
         self.name = name
         self.device = device
 
