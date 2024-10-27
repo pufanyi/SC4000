@@ -2,8 +2,7 @@ from math import e
 import numpy as np
 import matplotlib.pyplot as plt
 from tf_keras.src.backend import one_hot
-from torch import optim
-import wandb
+from tqdm import tqdm
 
 import pandas as pd
 import tensorflow as tf
@@ -30,15 +29,15 @@ class MobileNetV3(Model):
         **kwargs,
     ):
         super().__init__("MobileNetV3")
+        self.image_size = image_size
         self.pretrained_layer = hub.KerasLayer(pretrained, trainable=True)
         self.model = keras.Sequential(
             [
-                keras.Input(shape=(224, 224, 3)),
+                keras.Input(shape=(self.image_size, self.image_size, 3)),
                 self.pretrained_layer,
             ]
         )
-        self.image_size = image_size
-        self.num_classes = num_classes
+        self.num_classes = num_classes + 1
         self.train_transforms = [
             tf.image.random_flip_left_right,
             tf.image.random_flip_up_down,
@@ -46,11 +45,14 @@ class MobileNetV3(Model):
             lambda img: tf.image.random_crop(
                 img, size=[self.image_size, self.image_size, 3]
             ),
+            lambda img: img / 255.0,
         ]
         self.val_transforms = [
+            # lambda img: tf.cast(img, tf.float32),
             lambda img: tf.image.resize_with_crop_or_pad(
                 img, target_height=self.image_size, target_width=self.image_size
             ),
+            lambda img: img / 255.0,
         ]
 
     def collate_fn(self, batch):
@@ -61,17 +63,27 @@ class MobileNetV3(Model):
         return {"image": tf.stack(images), "one_hot_label": tf.stack(labels)}
 
     def get_target(self, label):
-        one_hot_label = [0.0] * (self.num_classes + 1)
-        one_hot_label[label] = 1.0
-        return one_hot_label
+        return tf.one_hot(label, self.num_classes)
 
-    def train_image_transforms(self, images):
+    def train_image_transforms(self, image):
+        image = keras.utils.img_to_array(image)
+        for fn in self.train_transforms:
+            image = fn(image)
+        return image
+
+    def val_image_transforms(self, image):
+        image = keras.utils.img_to_array(image)
+        for fn in self.val_transforms:
+            image = fn(image)
+        return image
+
+    def train_image_transforms_batch(self, images):
         for fn in self.train_transforms:
             images = tf.map_fn(fn, images)
         # print(images)
         return images
 
-    def val_image_transforms(self, images):
+    def val_image_transforms_batch(self, images):
         for fn in self.val_transforms:
             # image = fn(image)
             images = tf.map_fn(fn, images)
@@ -97,41 +109,46 @@ class MobileNetV3(Model):
         train_ds: Dataset,
         val_ds: Dataset,
         output_dir: str,
-        optimizer: str = "rmsprop",
         lr: float = 1e-4,
         early_stopping_patience: int = 5,
-        train_batch_size: int = 32,
-        eval_batch_size: int = 32,
+        train_batch_size: int = 8,
+        eval_batch_size: int = 8,
         lr_reduce_patience: int = 3,
         image_size: int = 224,
         lr_reduce_min_delta: float = 1e-4,
         **kwargs,
     ):
+        train_ds = train_ds
+        val_ds = val_ds
+
         train_steps = len(train_ds) // train_batch_size
 
         self.kwargs = kwargs
         self.image_size = image_size
 
-        # train_one_hot_labels = [tf.one_hot(label, self.num_classes) for label in train_ds["label"]]
-        # val_one_hot_labels = [tf.one_hot(label, self.num_classes) for label in val_ds["label"]]
+        train_labels = [
+            tf.one_hot(label, self.num_classes)
+            for label in tqdm(train_ds["label"], desc="Converting train labels")
+        ]
+        val_labels = [
+            tf.one_hot(label, self.num_classes)
+            for label in tqdm(val_ds["label"], desc="Converting val labels")
+        ]
 
-        train_one_hot_labels = [self.get_target(label) for label in train_ds["label"]]
-        val_one_hot_labels = [self.get_target(label) for label in val_ds["label"]]
+        train_images = [
+            self.train_image_transforms(item)
+            for item in tqdm(train_ds["image"], desc="Converting train images")
+        ]
+        val_images = [
+            self.val_image_transforms(item)
+            for item in tqdm(val_ds["image"], desc="Converting val images")
+        ]
 
-        train_ds = train_ds.add_column("one_hot_label", train_one_hot_labels)
-        val_ds = val_ds.add_column("one_hot_label", val_one_hot_labels)
-
-        tf_train_ds = train_ds.to_tf_dataset(
-            columns=["image", "one_hot_label"],
-            batch_size=train_batch_size,
-            drop_remainder=True,
-            # collate_fn=self.collate_fn,
-        )
-        tf_val_ds = val_ds.to_tf_dataset(
-            columns=["image", "one_hot_label"],
-            batch_size=eval_batch_size,
-            drop_remainder=True,
-            # collate_fn=self.collate_fn,
+        tf_train_ds = tf.data.Dataset.from_tensor_slices(
+            (train_images, train_labels)
+        ).batch(train_batch_size, drop_remainder=True)
+        tf_val_ds = tf.data.Dataset.from_tensor_slices((val_images, val_labels)).batch(
+            eval_batch_size, drop_remainder=True
         )
 
         self.model.compile(
@@ -140,14 +157,9 @@ class MobileNetV3(Model):
             metrics=["accuracy"],
         )
 
-        tf_train_ds = tf_train_ds.map(
-            self.train_map, num_parallel_calls=tf.data.AUTOTUNE
-        )
-        tf_val_ds = tf_val_ds.map(self.val_map, num_parallel_calls=tf.data.AUTOTUNE)
-
         for images, labels in tf_train_ds.take(1):
-            logger.info(f"Sample train batch images shape: {images.shape}")
-            logger.info(f"Sample train batch labels shape: {labels.shape}")
+            logger.info(f"Sample train batch images: {images}")
+            logger.info(f"Sample train batch labels: {labels}")
 
         for images, labels in tf_val_ds.take(1):
             logger.info(f"Sample val batch images shape: {images.shape}")
