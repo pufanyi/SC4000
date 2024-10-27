@@ -25,7 +25,7 @@ class MobileNetV3(Model):
         pretrained: str = "https://tfhub.dev/google/cropnet/classifier/cassava_disease_V1/2",
         image_size=224,
         num_classes: int = 5,
-        resize_scale: float = 1.5,
+        resize_scale: float = 1,
         **kwargs,
     ):
         super().__init__("MobileNetV3")
@@ -102,7 +102,7 @@ class MobileNetV3(Model):
     def train_map(self, item):
         return (
             self.train_image_transforms(item["image"]),
-            self.get_target(item["label"])
+            self.get_target(item["label"]),
             # item["label"],
         )
 
