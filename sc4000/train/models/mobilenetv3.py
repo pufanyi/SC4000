@@ -24,8 +24,8 @@ class MobileNetV3(Model):
         *,
         pretrained: str = "https://tfhub.dev/google/cropnet/classifier/cassava_disease_V1/2",
         image_size=224,
-        batch_norm_momentum: float = 0.997,
         num_classes: int = 5,
+        resize_scale: float = 1.5,
         **kwargs,
     ):
         super().__init__("MobileNetV3")
@@ -37,20 +37,28 @@ class MobileNetV3(Model):
                 self.pretrained_layer,
             ]
         )
+        self.resize_scale = resize_scale
+        self.image_resize_shape = int(self.image_size * self.resize_scale)
         self.num_classes = num_classes + 1
         self.train_transforms = [
             tf.image.random_flip_left_right,
             tf.image.random_flip_up_down,
             lambda img: tf.image.random_brightness(img, 0.2),
+            lambda img: tf.image.random_saturation(img, 5, 10),
+            lambda img: tf.clip_by_value(img, 0.0, 255.0),
+            lambda img: tf.image.resize(
+                img, [self.image_resize_shape, self.image_resize_shape]
+            ),
             lambda img: tf.image.random_crop(
                 img, size=[self.image_size, self.image_size, 3]
             ),
-            lambda img: tf.image.random_saturation(img, 5, 10),
-            lambda img: tf.clip_by_value(img, 0.0, 255.0),
             lambda img: img / 255.0,
         ]
         self.val_transforms = [
             # lambda img: tf.cast(img, tf.float32),
+            lambda img: tf.image.resize(
+                img, [self.image_resize_shape, self.image_resize_shape]
+            ),
             lambda img: tf.image.resize_with_crop_or_pad(
                 img, target_height=self.image_size, target_width=self.image_size
             ),
@@ -112,11 +120,11 @@ class MobileNetV3(Model):
         output_dir: str,
         lr: float = 1e-5,
         early_stopping_patience: int = 5,
-        train_batch_size: int = 8,
-        eval_batch_size: int = 8,
+        train_batch_size: int = 32,
+        eval_batch_size: int = 32,
         lr_reduce_patience: int = 3,
         image_size: int = 224,
-        lr_reduce_min_delta: float = 1e-4,
+        lr_reduce_min_delta: float = 1e-3,
         **kwargs,
     ):
         train_ds = train_ds
