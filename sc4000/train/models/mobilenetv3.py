@@ -45,6 +45,8 @@ class MobileNetV3(Model):
             lambda img: tf.image.random_crop(
                 img, size=[self.image_size, self.image_size, 3]
             ),
+            lambda img: tf.image.random_saturation(img, 5, 10),
+            lambda img: tf.clip_by_value(img, 0.0, 255.0),
             lambda img: img / 255.0,
         ]
         self.val_transforms = [
@@ -90,18 +92,17 @@ class MobileNetV3(Model):
         return images
 
     def train_map(self, item):
-        logger.info(item["one_hot_label"])
         return (
             self.train_image_transforms(item["image"]),
-            # self.get_target(item["one_hot_label"])
-            item["one_hot_label"],
+            self.get_target(item["label"])
+            # item["label"],
         )
 
     def val_map(self, item):
         return (
             self.val_image_transforms(item["image"]),
-            item["one_hot_label"],
-            # self.get_target(item["one_hot_label"]),
+            # item["label"],
+            self.get_target(item["label"]),
         )
 
     def train(
@@ -109,7 +110,7 @@ class MobileNetV3(Model):
         train_ds: Dataset,
         val_ds: Dataset,
         output_dir: str,
-        lr: float = 1e-4,
+        lr: float = 1e-5,
         early_stopping_patience: int = 5,
         train_batch_size: int = 8,
         eval_batch_size: int = 8,
@@ -126,29 +127,23 @@ class MobileNetV3(Model):
         self.kwargs = kwargs
         self.image_size = image_size
 
-        train_labels = [
-            tf.one_hot(label, self.num_classes)
-            for label in tqdm(train_ds["label"], desc="Converting train labels")
+        train_list = [
+            self.train_map(item)
+            for item in tqdm(train_ds, desc="Converting train data")
         ]
-        val_labels = [
-            tf.one_hot(label, self.num_classes)
-            for label in tqdm(val_ds["label"], desc="Converting val labels")
-        ]
-
-        train_images = [
-            self.train_image_transforms(item)
-            for item in tqdm(train_ds["image"], desc="Converting train images")
-        ]
-        val_images = [
-            self.val_image_transforms(item)
-            for item in tqdm(val_ds["image"], desc="Converting val images")
+        val_list = [
+            self.val_map(item) for item in tqdm(val_ds, desc="Converting val data")
         ]
 
-        tf_train_ds = tf.data.Dataset.from_tensor_slices(
-            (train_images, train_labels)
-        ).batch(train_batch_size, drop_remainder=True)
-        tf_val_ds = tf.data.Dataset.from_tensor_slices((val_images, val_labels)).batch(
-            eval_batch_size, drop_remainder=True
+        tf_train_ds = (
+            tf.data.experimental.from_list(train_list)
+            .batch(train_batch_size, drop_remainder=True)
+            .prefetch(tf.data.experimental.AUTOTUNE)
+        )
+        tf_val_ds = (
+            tf.data.experimental.from_list(val_list)
+            .batch(eval_batch_size, drop_remainder=True)
+            .prefetch(tf.data.experimental.AUTOTUNE)
         )
 
         self.model.compile(
