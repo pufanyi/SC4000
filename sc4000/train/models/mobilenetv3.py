@@ -1,14 +1,9 @@
-from math import e
-import numpy as np
-import matplotlib.pyplot as plt
-from tf_keras.src.backend import one_hot
-from tqdm import tqdm
-
-import pandas as pd
 import tensorflow as tf
 import tf_keras as keras
 import tensorflow_hub as hub
 
+from tf_keras.src.backend import one_hot
+from tqdm import tqdm
 from pathlib import Path
 from datasets import Dataset
 
@@ -25,7 +20,7 @@ class MobileNetV3(Model):
         pretrained: str = "https://tfhub.dev/google/cropnet/classifier/cassava_disease_V1/2",
         image_size=224,
         num_classes: int = 5,
-        resize_scale: float = 1,
+        resize_scale: float = 1.3,
         **kwargs,
     ):
         super().__init__("MobileNetV3")
@@ -43,7 +38,10 @@ class MobileNetV3(Model):
         self.train_transforms = [
             tf.image.random_flip_left_right,
             tf.image.random_flip_up_down,
+            lambda img: tf.image.random_jpeg_quality(img, 75, 95),
             lambda img: tf.image.random_brightness(img, 0.2),
+            lambda img: tf.image.random_contrast(img, 0.2, 0.5),
+            lambda img: tf.image.random_hue(img, 0.2),
             lambda img: tf.image.random_saturation(img, 5, 10),
             lambda img: tf.clip_by_value(img, 0.0, 255.0),
             lambda img: tf.image.resize(
@@ -95,7 +93,6 @@ class MobileNetV3(Model):
 
     def val_image_transforms_batch(self, images):
         for fn in self.val_transforms:
-            # image = fn(image)
             images = tf.map_fn(fn, images)
         return images
 
@@ -103,13 +100,11 @@ class MobileNetV3(Model):
         return (
             self.train_image_transforms(item["image"]),
             self.get_target(item["label"]),
-            # item["label"],
         )
 
     def val_map(self, item):
         return (
             self.val_image_transforms(item["image"]),
-            # item["label"],
             self.get_target(item["label"]),
         )
 
@@ -119,10 +114,10 @@ class MobileNetV3(Model):
         val_ds: Dataset,
         output_dir: str,
         lr: float = 1e-5,
-        early_stopping_patience: int = 5,
-        train_batch_size: int = 32,
-        eval_batch_size: int = 32,
-        lr_reduce_patience: int = 3,
+        early_stopping_patience: int = 10,
+        train_batch_size: int = 64,
+        eval_batch_size: int = 64,
+        lr_reduce_patience: int = 5,
         image_size: int = 224,
         lr_reduce_min_delta: float = 1e-3,
         **kwargs,
@@ -159,14 +154,6 @@ class MobileNetV3(Model):
             loss=keras.losses.CategoricalCrossentropy(from_logits=False),
             metrics=["accuracy"],
         )
-
-        for images, labels in tf_train_ds.take(1):
-            logger.info(f"Sample train batch images: {images}")
-            logger.info(f"Sample train batch labels: {labels}")
-
-        for images, labels in tf_val_ds.take(1):
-            logger.info(f"Sample val batch images shape: {images.shape}")
-            logger.info(f"Sample val batch labels shape: {labels.shape}")
 
         self.model.fit(
             tf_train_ds,
