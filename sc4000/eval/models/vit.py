@@ -20,7 +20,7 @@ class ViT(Model):
     def __init__(
         self,
         *,
-        pretrained="google/vit-large-patch16-224",
+        pretrained="pufanyi/SC4000_vit_base_full_13500",
         id2label=None,
         label2id=None,
         device=None,
