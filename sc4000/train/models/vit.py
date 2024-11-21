@@ -92,7 +92,7 @@ class ViT(Model):
         eval_strategy: str = "steps",
         logging_steps: int = 10,
         eval_steps: int = 100,
-        save_steps: int = 500,
+        save_steps: int = 10000,
         lr: float = 1e-4,
         weight_decay: float = 0.01,
         num_train_epochs: int = 50,
@@ -102,6 +102,7 @@ class ViT(Model):
         logging_dir: str = "logs",
         label_smoothing: float = 0.06,
         remove_unused_columns: bool = False,
+        num_warmup_steps: int = 500,
         **kwargs,
     ):
         label_counts = Counter(train_ds["label"])
@@ -114,6 +115,7 @@ class ViT(Model):
         logger.debug(f"Class weights: {class_weights}")
 
         train_ds.set_transform(self.apply_train_transforms)
+        # train_ds.set_transform(self.apply_val_transforms)
         val_ds.set_transform(self.apply_val_transforms)
 
         train_args = TrainingArguments(
@@ -150,6 +152,8 @@ class ViT(Model):
                 "accuracy": (predictions == labels).astype(np.float32).mean().item()
             }
 
+        train_ds = train_ds.select(range(10000))
+
         trainer = SC4000Trainer(
             self.model,
             train_args,
@@ -160,8 +164,14 @@ class ViT(Model):
             data_collator=collate_fn,
             tokenizer=self.image_processor,
             compute_metrics=compute_metrics,
-            lr_scheduler="reduce_lr_on_plateau",
-            lr_scheduler_kwargs={"factor": 0.5, "min_lr": 5e-6},
+            # lr_scheduler="reduce_lr_on_plateau",
+            # lr_scheduler_kwargs={"factor": 0.5, "min_lr": 5e-6},
+            lr_scheduler="cosine",
+            lr_scheduler_kwargs={
+                "num_cycles": 0.5,
+                "num_warmup_steps": num_warmup_steps,
+            },
+            use_lora=True,
         )
 
         trainer.train()

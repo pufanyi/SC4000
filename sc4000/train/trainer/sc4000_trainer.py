@@ -23,9 +23,8 @@ class SC4000Trainer(Trainer):
         if lr_scheduler_kwargs is None:
             lr_scheduler_kwargs = {}
         if use_lora:
-            self.loftq_config = LoftQConfig()
             self.lora_config = LoraConfig(
-                init_lora_weights="loftq", loftq_config=self.loftq_config
+                init_lora_weights="olora", target_modules="all-linear"
             )
             self.model = get_peft_model(model, self.lora_config)
         weights = [weights[w] for w in sorted(list(weights.keys()))]
@@ -38,10 +37,15 @@ class SC4000Trainer(Trainer):
     def create_scheduler(
         self, num_training_steps: int, optimizer: torch.optim.Optimizer = None
     ):
+        # print("======================== Warmup steps:", self.args.get_warmup_steps(num_training_steps))
+        if "num_warmup_steps" in self.args.lr_scheduler_kwargs:
+            num_warmup_steps = self.args.lr_scheduler_kwargs.pop("num_warmup_steps")
+        else:
+            num_warmup_steps = self.args.get_warmup_steps(num_training_steps)
         self.lr_scheduler = get_scheduler(
             self.scheduler_name,
             optimizer=self.optimizer if optimizer is None else optimizer,
-            num_warmup_steps=self.args.get_warmup_steps(num_training_steps),
+            num_warmup_steps=num_warmup_steps,
             num_training_steps=num_training_steps,
             scheduler_specific_kwargs=self.args.lr_scheduler_kwargs,
         )
