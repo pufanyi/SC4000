@@ -1,6 +1,6 @@
 # Cassava Leaf Disease Classification
 
-[Kaggle Competition](https://www.kaggle.com/competitions/cassava-leaf-disease-classification/overview) / [report](https://pufanyi.github.io/SC4000/report/main.pdf) / [submission](https://www.kaggle.com/code/pufanyi/exp-convnextv2-base-x-vit-large-x-mobile-net)
+[Kaggle Competition](https://www.kaggle.com/competitions/cassava-leaf-disease-classification/overview) / [report](https://pufanyi.github.io/SC4000/report/main.pdf) / [submission](https://www.kaggle.com/code/pufanyi/final-submission)
 
 ## Installation
 
