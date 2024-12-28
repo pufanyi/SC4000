@@ -47,6 +47,7 @@ python -m sc4000.eval.evaluate --model=vit --model_args="pretrained=output/model
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14564899.svg)](https://doi.org/10.5281/zenodo.14564899)
 
+```bib
 @misc{sc4000cassava2024,
     title        = {Cassava Leaf Disease Classification},
     url          = {https://github.com/pufanyi/SC4000},
@@ -56,3 +57,4 @@ python -m sc4000.eval.evaluate --model=vit --model_args="pretrained=output/model
     month        = {December},
     year         = {2024}
 }
+```
