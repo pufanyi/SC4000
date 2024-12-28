@@ -4,7 +4,7 @@
 
 Given the high complexity of this classification problem, we aim to conserve computational resources by avoiding retraining the model from scratch. Instead, we perform fine-tuning on multiple models separately and integrate their results to complete the experiments.
 
-\paragraph{\VITFULL} In recent years, the Transformers \cite{vaswani2017attention} architecture has demonstrated remarkable superiority in various vision tasks. Therefore, we plan to use \VITFULL (\VIT) \cite{dosovitskiy2020vit} as one of our training models. We conducted small-scale fine-tuning experiments on models with varying sizes and resolutions using limited data. 
+\paragraph{\VITFULL} In recent years, the Transformers \cite{vaswani2017attention} architecture has demonstrated remarkable superiority in various vision tasks. Therefore, we plan to use \VITFULL (\VIT) \cite{dosovitskiy2020vit} as one of our training models. We conducted small-scale fine-tuning experiments on models with varying sizes and resolutions using limited data.
 
 Our findings show that, for \VIT, increasing model size and resolution makes the model have a better performance. As a result, we choose \VIT Large model with resolution $384\times 384$\footnote{Obtained from \url{https://huggingface.co/google/vit-large-patch16-384}.} as our pretraining model.
 
