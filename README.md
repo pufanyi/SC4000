@@ -1,4 +1,4 @@
-# CassavaLeafDiseaseClassification
+# Cassava Leaf Disease Classification
 
 [Kaggle Competition](https://www.kaggle.com/competitions/cassava-leaf-disease-classification/overview)
 
