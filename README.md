@@ -43,6 +43,6 @@ For the `--model_args` options, should input like this:
 python -m sc4000.eval.evaluate --model=vit --model_args="pretrained=output/models/checkpoint-124" --subset=full
 ```
 
-## DOI
+## Citation
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14564899.svg)](https://doi.org/10.5281/zenodo.14564899)
