@@ -13,8 +13,8 @@
 conda create --name SC4000 python=3.10
 conda activate SC4000
 
-git clone https://github.com/pufanyi/CassavaLeafDiseaseClassification.git
-cd CassavaLeafDiseaseClassification
+git clone https://github.com/pufanyi/SC4000.git
+cd SC4000
 python -m pip install -e .
 
 ```
