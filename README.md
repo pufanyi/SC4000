@@ -4,8 +4,8 @@
 
 ## Final Score
 
-- **Public Leaderboard**: 0.9095 (Rank 4)
-- **Private Leaderboard**: 0.9060 (Rank 2)
+- **Public Leaderboard**: 0.9095 (Rank 4/3901)
+- **Private Leaderboard**: 0.9060 (Rank 2/3901)
 
 ## Installation
 
